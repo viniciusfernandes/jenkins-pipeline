@@ -1,4 +1,5 @@
 def call(Map config = [:]) {
+    echo "Loaded javaPipeline.groovy from shared library"
     pipeline {
         agent any
         stages {
