@@ -1,0 +1,32 @@
+services:
+  jenkins:
+    image: jenkins:jdk21
+    build: .
+    container_name: jenkins
+    user: root
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    environment:
+      - DOCKER_HOST=tcp://dind:2375
+      - DOCKER_TLS_CERTDIR=
+      - JAVA_OPTS=-Djenkins.install.runSetupWizard=false
+      - JENKINS_OPTS=--prefix=/jenkins
+    volumes:
+      - /tmp/jenkins_home:/var/jenkins_home
+    depends_on:
+      - dind
+    restart: unless-stopped
+
+  dind:
+    image: docker:dind
+    container_name: dind
+    privileged: true
+    environment:
+      - DOCKER_TLS_CERTDIR=
+    volumes:
+      - dind_storage:/var/lib/docker
+    restart: unless-stopped
+
+volumes:
+  dind_storage:

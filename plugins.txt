@@ -1,0 +1,14 @@
+# Core CI/CD and Pipelines
+workflow-aggregator
+pipeline-stage-view
+credentials-binding
+git
+blueocean
+
+# Docker integration
+docker-plugin
+docker-workflow
+
+# Job and UI enhancements
+job-dsl
+timestamper
