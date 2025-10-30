@@ -4,7 +4,7 @@ def call(Map config = [:]) {
         stages {
             stage('Checkout') {
                 steps {
-                    git branch: 'master', url: 'https://github.com/viniciusfernandes/authentication-api.git'
+                    git branch: config.branch ?: 'main', url: config.repo
                 }
             }
             stage('Build') {
@@ -16,17 +16,21 @@ def call(Map config = [:]) {
                 steps {
                     sh './gradlew test'
                 }
-
+                post {
+                    always {
+                        junit '**/target/surefire-reports/*.xml'
+                    }
+                }
             }
             stage('Package') {
                 steps {
-                    sh './gradlew jar -x test'
-                    archiveArtifacts artifacts: 'build/libs/*.jar', fingerprint: true
+                    sh './gradlew package -DskipTests -B'
+                    archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
                 }
             }
             stage('Docker Build') {
                 steps {
-                    sh 'docker compose build'
+                    sh "docker build -t ${config.image ?: 'myapp:latest'} ."
                 }
             }
         }

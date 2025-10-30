@@ -1,52 +1,61 @@
 def call(Map config = [:]) {
     pipeline {
         agent any
+
         environment {
-            JAVA_HOME = "/usr/lib/jvm/java-21-openjdk"
-            DOCKER_IMAGE = "${config.image ?: 'default-app:latest'}"
+            GRADLE_OPTS = "-Dorg.gradle.daemon=false"
         }
 
         stages {
             stage('Checkout') {
                 steps {
-                    git branch: "${config.branch ?: 'main'}", url: config.repo
+                    echo "🔄 Checking out branch: ${config.branch ?: 'main'}"
+                    git branch: config.branch ?: 'main', url: config.repo
                 }
             }
 
             stage('Build') {
                 steps {
-                    sh './mvnw clean compile -B'
+                    echo "🏗️ Building project with Gradle..."
+                    sh './gradlew clean build -x test'
                 }
             }
 
             stage('Test') {
                 steps {
-                    sh './mvnw test -B'
+                    echo "🧪 Running tests..."
+                    sh './gradlew test'
                 }
                 post {
                     always {
-                        junit '**/target/surefire-reports/*.xml'
+                        junit '**/build/test-results/test/*.xml'
                     }
                 }
             }
 
             stage('Package') {
                 steps {
-                    sh './mvnw package -DskipTests -B'
-                    archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+                    echo "📦 Creating application JAR..."
+                    sh './gradlew jar'
+                    archiveArtifacts artifacts: 'build/libs/*.jar', fingerprint: true
                 }
             }
 
             stage('Docker Build') {
                 steps {
-                    sh "docker build -t $DOCKER_IMAGE ."
+                    echo "🐳 Building Docker image..."
+                    sh "docker build -t ${config.image ?: 'myapp:latest'} ."
                 }
             }
         }
 
         post {
-            success { echo "✅ Build completed successfully" }
-            failure { echo "❌ Build failed" }
+            success {
+                echo "✅ Pipeline completed successfully for ${config.repo}"
+            }
+            failure {
+                echo "❌ Pipeline failed for ${config.repo}"
+            }
         }
     }
 }
