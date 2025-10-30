@@ -1,61 +1,49 @@
-def call(Map config = [:]) {
-    pipeline {
+pipeline {
         agent any
-
         environment {
-            GRADLE_OPTS = "-Dorg.gradle.daemon=false"
-        }
+                    GRADLE_OPTS = "-Dorg.gradle.daemon=false"
+                }
 
+		parameters {
+        	string(name: 'VERSION', description: 'Version tag for the Docker image (e.g., 1.0.0)', defaultValue: '')
+    	}
+		
         stages {
             stage('Checkout') {
                 steps {
-                    echo "🔄 Checking out branch: ${config.branch ?: 'main'}"
-                    git branch: config.branch ?: 'main', url: config.repo
+                    git branch: 'master', url: 'https://github.com/viniciusfernandes/authentication-api.git'
                 }
             }
-
             stage('Build') {
                 steps {
-                    echo "🏗️ Building project with Gradle..."
-                    sh './gradlew clean build -x test'
+                    echo "Building version: ${params.VERSION}"
+                    sh "./gradlew build -x test"
                 }
             }
-
             stage('Test') {
                 steps {
-                    echo "🧪 Running tests..."
                     sh './gradlew test'
                 }
-                post {
-                    always {
-                        junit '**/build/test-results/test/*.xml'
-                    }
-                }
-            }
 
+            }
             stage('Package') {
                 steps {
-                    echo "📦 Creating application JAR..."
-                    sh './gradlew jar'
+                    sh './gradlew jar -x test'
                     archiveArtifacts artifacts: 'build/libs/*.jar', fingerprint: true
                 }
             }
-
-            stage('Docker Build') {
+			stage('Docker Build & Tag') {
                 steps {
-                    echo "🐳 Building Docker image..."
-                    sh "docker build -t ${config.image ?: 'myapp:latest'} ."
+                    script {
+                        if (!params.VERSION?.trim()) {
+                            error "VERSION parameter is mandatory! Please set it when triggering the build."
+                        }
+
+                        def imageTag = "my-app:${params.VERSION}"
+                        echo "Building Docker image: ${imageTag}"
+                        sh "docker build -t ${imageTag} ."
+                    }
                 }
             }
         }
-
-        post {
-            success {
-                echo "✅ Pipeline completed successfully for ${config.repo}"
-            }
-            failure {
-                echo "❌ Pipeline failed for ${config.repo}"
-            }
-        }
-    }
 }
