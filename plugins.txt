@@ -1,14 +1,24 @@
-# Core CI/CD and Pipelines
+# Core Pipeline
 workflow-aggregator
 pipeline-stage-view
-credentials-binding
-git
-blueocean
+pipeline-utility-steps
 
-# Docker integration
-docker-plugin
+# Git & SCM
+git
+credentials
+credentials-binding
+ssh-credentials
+
+# Build tools
+gradle
+
+# Docker
 docker-workflow
 
-# Job and UI enhancements
+# Security / Dependency scanning
+owasp-dependency-check
+
+# UI & Quality
+blueocean
 job-dsl
 timestamper
