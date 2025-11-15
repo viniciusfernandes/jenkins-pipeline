@@ -34,6 +34,9 @@ pipeline {
         stage('Dependency Validation') {
             environment {
                 // Pull NVD API key from Jenkins Credentials store
+                // This have to be created on the link => https://nvd.nist.gov/developers/api-key-requested
+                // And have to add the new global credentialsId as type=text and ID=NVD_API_KEY
+                // Insert the key provided from the link https://nvd.nist.gov/developers/api-key-requested
                 NVD_API_KEY = credentials('NVD_API_KEY')
             }
             steps {
